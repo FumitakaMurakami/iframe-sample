@@ -7,7 +7,7 @@ function initMap() {
       const longitude = position.coords.longitude;
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: latitude, lng: longitude },
-        zoom: 100,
+        zoom: 50,
       });
     }
 
