@@ -7,6 +7,7 @@
     <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <script src="js/anime.min.js"></script>
     <style>
       #positions {
         position: absolute;
@@ -21,89 +22,145 @@
         color: white;
         font-size: 1em;
       }
+      .buttons {
+        color: white;
+        position: absolute;
+        height: 80px;
+        width: 120px;
+        z-index: -9999;
+        bottom: 0px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        left: 140px;
+      }
+      .after-buttons {
+        color: white;
+        position: absolute;
+        height: 80px;
+        width: 120px;
+        z-index: 9999;
+        bottom: 0px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        left: 140px;
+      }
+      .loader {
+        height: 80%;
+        width: 100%;
+      }
     </style>
   </head>
 
   <body style="margin: 0; overflow: hidden">
     <div id="status"></div>
     <div id="positions"></div>
-
+    <div>
+      <button
+        class="buttons"
+        type="button"
+        id="button1"
+        onclick=" treasureFound()"
+      >
+        宝を開ける
+      </button>
+    </div>
     <a-scene
       vr-mode-ui="enabled: false"
       gps-camera-debug
       embedded
       arjs="sourceType: webcam; debugUIEnabled: false;"
     >
-      <a-text
-        id="text"
-        value="This content will always face you."
+      <a-box
+        id="treasure"
+        color="red"
+        scale="1 1 1"
         look-at="&#91;gps-camera&#93;"
-        scale="120 120 120"
-      ></a-text>
-      <a-text
-        id="text1"
-        value="A"
-        look-at="&#91;gps-camera&#93;"
-        scale="120 120 120"
-      ></a-text>
-      <a-text
-        id="text2"
-        value="B"
-        look-at="&#91;gps-camera&#93;"
-        scale="120 120 120"
-      ></a-text>
-      <a-camera gps-camera="maxDistance:100" rotation-reader> </a-camera>
+        moveLink
+      ></a-box>
+      <a-camera
+        gps-camera="maxDistance:100"
+        cursor="rayOrigin: mouse; fuse:false"
+        rotation-reader
+      >
+      </a-camera>
     </a-scene>
   </body>
   <script>
+    function run(id) {
+      console.log("#" + id);
+      const mid = "#" + id;
+      var entity = document.querySelector(mid);
+
+      var test = {
+        posX: 0,
+        posY: 0,
+      };
+
+      anime({
+        targets: test,
+        posY: 2,
+        posX: 0,
+        elasticity: 10000,
+        update: function () {
+          entity.setAttribute("position", {
+            x: 0,
+            y: test.posY,
+            z: -4,
+          });
+        },
+        duration: 800,
+        direction: "alternate",
+        loop: 1,
+      });
+    }
+    function treasureFound() {
+      run("button1");
+    }
     function getRandomArbitrary(min, max) {
       return Math.random() * (max - min) + min;
     }
 
     function distance(lat1, lng1, lat2, lng2) {
-      const R = Math.PI / 180;
-      lat1 *= R;
-      lng1 *= R;
-      lat2 *= R;
-      lng2 *= R;
-      return (
-        6371 *
-        Math.acos(
-          Math.cos(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1) +
-            Math.sin(lat1) * Math.sin(lat2)
-        )
-      );
+      if (lat1 != lat2 && lng1 != lng2) {
+        const R = Math.PI / 180;
+        lat1 *= R;
+        lng1 *= R;
+        lat2 *= R;
+        lng2 *= R;
+        return (
+          6371 *
+          Math.acos(
+            Math.cos(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1) +
+              Math.sin(lat1) * Math.sin(lat2)
+          )
+        );
+      } else {
+        return 0;
+      }
     }
     function geoSetup() {
       const status = document.querySelector("#status");
       const positions = document.querySelector("#positions");
-      const text = document.querySelector("#text");
-      const text1 = document.querySelector("#text1");
-      const text2 = document.querySelector("#text2");
+      const treasure = document.querySelector("#treasure");
       function success(position) {
-        console.log(text.getAttribute("gps-entity-place"));
-        console.log(position);
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
-        randomlatitude = getRandomArbitrary(0.0001, 0.001);
-        randomlongitude = getRandomArbitrary(0.0001, 0.001);
-        console.log(randomlatitude);
-        let modellatitude = latitude + randomlatitude;
-        let modellongitude = longitude + randomlongitude;
-        console.log(modellatitude, modellongitude);
-        text.setAttribute(
+        randomlatitude = getRandomArbitrary(0.0005, 0.001);
+        randomlongitude = getRandomArbitrary(0.0005, 0.001);
+
+        let treasurelatitude = latitude + randomlongitude;
+        let treasurelongitude = longitude + randomlongitude;
+        /* treasure.setAttribute(
           "gps-entity-place",
-          `latitude:${modellatitude}; longitude:${modellongitude};`
-        );
-        text1.setAttribute(
+          `latitude:${latitude}; longitude:${longitude};`
+        ); */
+        treasure.setAttribute(
           "gps-entity-place",
-          `latitude:${latitude + 0.001}; longitude:${longitude};`
+          `latitude:${treasurelatitude}; longitude:${treasurelongitude};`
         );
-        text2.setAttribute(
-          "gps-entity-place",
-          `latitude:${latitude - 0.001}; longitude:${longitude};`
-        );
-        console.log(text.getAttribute("gps-entity-place"));
+
         status.textContent = "";
       }
 
@@ -121,58 +178,39 @@
     function geoFindMe() {
       const status = document.querySelector("#status");
       const positions = document.querySelector("#positions");
-      const text = document.querySelector("#text");
-      const text1 = document.querySelector("#text1");
-      const text2 = document.querySelector("#text2");
-      const A = document.querySelector("#A");
-      const B = document.querySelector("#B");
+      const treasure = document.querySelector("#treasure");
+
       function success(position) {
-        console.log(text.getAttribute("gps-entity-place"));
-        let modellatitude = text.getAttribute("gps-entity-place").latitude;
-        let modellongitude = text.getAttribute("gps-entity-place").longitude;
+        let modellatitude = treasure.getAttribute("gps-entity-place").latitude;
+        let modellongitude =
+          treasure.getAttribute("gps-entity-place").longitude;
         console.log(position);
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
         const pointDistance = Math.round(
           distance(modellatitude, modellongitude, latitude, longitude) * 1000
         );
-        text1.setAttribute(
-          "gps-entity-place",
-          `latitude:${latitude + 0.0005}; longitude:${longitude};`
-        );
-
-        text2.setAttribute(
-          "gps-entity-place",
-          `latitude:${latitude - 0.0005}; longitude:${longitude};`
-        );
-        const Ala = text1.getAttribute("gps-entity-place").latitude - latitude;
-        const Alo =
-          text1.getAttribute("gps-entity-place").longitude - longitude;
-        const Bla = text2.getAttribute("gps-entity-place").latitude - latitude;
-        const Blo =
-          text2.getAttribute("gps-entity-place").longitude - longitude;
-        status.textContent = "";
-        positions.innerHTML =
-          "<div>latitude:" +
-          latitude +
-          " longitude:" +
-          longitude +
-          "<br>modellatitude:" +
-          modellatitude +
-          " modellongitude:" +
-          modellongitude +
-          "<br>モデルまでの距離" +
-          pointDistance +
-          "m" +
-          "<br>A " +
-          Ala +
-          " " +
-          Alo +
-          "<br>B " +
-          Bla +
-          " " +
-          Blo +
-          "</div>";
+        if (pointDistance <= 50) {
+          if (pointDistance <= 20) {
+            const b1 = document.querySelector("#button1");
+            treasure.setAttribute("opacity", `1`);
+            treasure.setAttribute("color", `red`);
+            console.log(b1);
+            b1.classList.remove("buttons");
+            b1.classList.toggle("after-buttons");
+          } else {
+            treasure.setAttribute("opacity", `1`);
+            treasure.setAttribute("color", `black`);
+            b1.classList.remove("after-buttons");
+            b1.classList.toggle("buttons");
+          }
+        } else {
+          treasure.setAttribute("opacity", `0`);
+          b1.classList.remove("after-buttons");
+          b1.classList.toggle("buttons");
+        }
+        const Blo = (positions.innerHTML =
+          "<div>モデルまでの距離" + pointDistance + "m" + "</div>");
       }
 
       function error() {
